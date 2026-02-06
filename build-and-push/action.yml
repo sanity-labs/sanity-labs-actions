@@ -24,7 +24,7 @@ runs:
   using: composite
   steps:
     - name: Setup GCP auth
-      uses: sanity-labs/github-actions/setup-gcp@main
+      uses: sanity-labs/sanity-labs-actions/setup-gcp@main
       env:
         GCR_CREDENTIALS: ${{ env.GCR_CREDENTIALS }}
 

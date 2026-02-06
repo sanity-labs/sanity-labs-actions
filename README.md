@@ -1,4 +1,4 @@
-# sanity-labs/github-actions
+# sanity-labs/sanity-labs-actions
 
 Reusable GitHub Actions for the sanity-labs org. These composite actions handle building, pushing, and deploying containerized apps to the labs GKE cluster.
 
@@ -11,7 +11,7 @@ Authenticates to GCP and logs in to Artifact Registry. Used internally by `build
 Requires the `GCR_CREDENTIALS` environment variable (org secret containing a GCP service account JSON key).
 
 ```yaml
-- uses: sanity-labs/github-actions/setup-gcp@main
+- uses: sanity-labs/sanity-labs-actions/setup-gcp@main
   env:
     GCR_CREDENTIALS: ${{ secrets.GCR_CREDENTIALS }}
 ```
@@ -21,7 +21,7 @@ Requires the `GCR_CREDENTIALS` environment variable (org secret containing a GCP
 Builds a Docker image and pushes it to `europe-docker.pkg.dev/sanity-artifacts/containers/`. Handles GCP auth automatically.
 
 ```yaml
-- uses: sanity-labs/github-actions/build-and-push@main
+- uses: sanity-labs/sanity-labs-actions/build-and-push@main
   env:
     GCR_CREDENTIALS: ${{ secrets.GCR_CREDENTIALS }}
 ```
@@ -39,7 +39,7 @@ Builds a Docker image and pushes it to `europe-docker.pkg.dev/sanity-artifacts/c
 Updates the `newTag` field in a kustomization.yaml overlay and pushes the change, triggering ArgoCD auto-sync.
 
 ```yaml
-- uses: sanity-labs/github-actions/deploy@main
+- uses: sanity-labs/sanity-labs-actions/deploy@main
   with:
     image-tag: ${{ github.sha }}
 ```
@@ -65,11 +65,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: sanity-labs/github-actions/build-and-push@main
+      - uses: sanity-labs/sanity-labs-actions/build-and-push@main
         env:
           GCR_CREDENTIALS: ${{ secrets.GCR_CREDENTIALS }}
 
-      - uses: sanity-labs/github-actions/deploy@main
+      - uses: sanity-labs/sanity-labs-actions/deploy@main
         with:
           image-tag: ${{ github.sha }}
 ```
