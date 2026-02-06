@@ -1,0 +1,61 @@
+name: Build and Push
+description: Build and push Docker image to Artifact Registry
+
+inputs:
+  image:
+    description: Image name (without registry prefix). Defaults to repo name.
+    required: false
+  tag:
+    description: Image tag. Defaults to github.sha.
+    required: false
+  dockerfile:
+    description: Path to Dockerfile. Defaults to Dockerfile.
+    required: false
+    default: Dockerfile
+  context:
+    description: Docker build context. Defaults to .
+    required: false
+    default: .
+  build-args:
+    description: Newline-separated Docker build args
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup GCP auth
+      uses: sanity-labs/github-actions/setup-gcp@main
+      env:
+        GCR_CREDENTIALS: ${{ env.GCR_CREDENTIALS }}
+
+    - name: Set image name
+      id: meta
+      shell: bash
+      run: |
+        IMAGE="${{ inputs.image }}"
+        if [ -z "$IMAGE" ]; then
+          IMAGE="${{ github.event.repository.name }}"
+        fi
+        TAG="${{ inputs.tag }}"
+        if [ -z "$TAG" ]; then
+          TAG="${{ github.sha }}"
+        fi
+        FULL="europe-docker.pkg.dev/sanity-artifacts/containers/${IMAGE}"
+        echo "image=${FULL}" >> "$GITHUB_OUTPUT"
+        echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
+        push: true
+        tags: |
+          ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
+          ${{ steps.meta.outputs.image }}:latest
+        build-args: ${{ inputs.build-args }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

@@ -1,0 +1,17 @@
+name: Setup GCP
+description: Authenticate to GCP and configure Docker for Artifact Registry
+
+runs:
+  using: composite
+  steps:
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ env.GCR_CREDENTIALS }}
+
+    - name: Login to Artifact Registry
+      uses: docker/login-action@v3
+      with:
+        registry: europe-docker.pkg.dev
+        username: _json_key
+        password: ${{ env.GCR_CREDENTIALS }}
