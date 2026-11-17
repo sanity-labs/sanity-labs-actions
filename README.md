@@ -8,12 +8,14 @@ Reusable GitHub Actions for the sanity-labs org. These composite actions handle 
 
 Authenticates to GCP and logs in to Artifact Registry. Used internally by `build-and-push`, but can also be used standalone.
 
-Requires the `GCR_CREDENTIALS` environment variable (org secret containing a GCP service account JSON key).
+Requires `id-token: write` on the job.
 
 ```yaml
-- uses: sanity-labs/sanity-labs-actions/setup-gcp@main
-  env:
-    GCR_CREDENTIALS: ${{ secrets.GCR_CREDENTIALS }}
+permissions:
+  contents: read
+  id-token: write
+steps:
+  - uses: sanity-labs/sanity-labs-actions/setup-gcp@main
 ```
 
 ### `build-and-push`
@@ -22,8 +24,6 @@ Builds a Docker image and pushes it to `europe-docker.pkg.dev/sanity-artifacts/c
 
 ```yaml
 - uses: sanity-labs/sanity-labs-actions/build-and-push@main
-  env:
-    GCR_CREDENTIALS: ${{ secrets.GCR_CREDENTIALS }}
 ```
 
 | Input | Required | Default | Description |
@@ -62,12 +62,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: sanity-labs/sanity-labs-actions/build-and-push@main
-        env:
-          GCR_CREDENTIALS: ${{ secrets.GCR_CREDENTIALS }}
 
       - uses: sanity-labs/sanity-labs-actions/deploy@main
         with:
@@ -78,11 +77,4 @@ jobs:
 
 ### GCP Auth
 
-These actions authenticate using a GCP service account JSON key stored as `GCR_CREDENTIALS` at the org level.
-
-To set up:
-
-1. Create a service account in the `sanity-labs` GCP project
-2. Grant `roles/artifactregistry.writer` on the `sanity-artifacts` project
-3. Generate a JSON key
-4. Add it as `GCR_CREDENTIALS` org secret in the sanity-labs GitHub org
+These actions impersonate `github-actions-gcr@sanity-labs.iam.gserviceaccount.com` through Workload Identity Federation, so no key is stored in GitHub. Any sanity-labs repo can use them; the pool and binding live in `sanity-io/terraform` under `workspaces/staging/sanity-labs`.
